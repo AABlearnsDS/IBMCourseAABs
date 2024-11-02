@@ -1,0 +1,121 @@
+import pandas as pd
+import geopandas as gpd
+import matplotlib.pyplot as plt
+from geopy.geocoders import Nominatim
+from shapely.geometry import Point
+import time
+
+# List of cities and countries
+city_data = [
+    ("Amman", "Jordan"),
+    ("Amsterdam", "Netherlands"),
+    ("Athens", "Greece"),
+    ("Bangkok", "Thailand"),
+    ("Berlin", "Germany"),
+    ("Bern", "Switzerland"),
+    ("Bogota", "Colombia"),
+    ("Bratislava", "Slovakia"),
+    ("Brussels", "Belgium"),
+    ("Bucharest", "Romania"),
+    ("Budapest", "Hungary"),
+    ("Buenos Aires", "Argentina"),
+    ("Busan", "South Korea"),
+    ("Cairo", "Egypt"),
+    ("Colombo", "Sri Lanka"),
+    ("Copenhagen", "Denmark"),
+    ("Dhaka", "Bangladesh"),
+    ("Dublin", "Ireland"),
+    ("Dusseldorf", "Germany"),
+    ("Frankfurt", "Germany"),
+    ("Hamburg", "Germany"),
+    ("Hanoi", "Vietnam"),
+    ("Harare", "Zimbabwe"),
+    ("Helsinki", "Finland"),
+    ("Ho Chi Minh", "Vietnam"),
+    ("Hong Kong", "Hong Kong"),
+    ("Istanbul", "Turkey"),
+    ("Jakarta", "Indonesia"),
+    ("Johannesburg", "South Africa"),
+    ("Karachi", "Pakistan"),
+    ("Kiev", "Ukraine"),
+    ("Kuala Lumpur", "Malaysia"),
+    ("Kuwait", "Kuwait"),
+    ("Lagos", "Nigeria"),
+    ("Lima", "Peru"),
+    ("Lisbon", "Portugal"),
+    ("Ljubljana", "Slovenia"),
+    ("London", "United Kingdom"),
+    ("Luxembourg", "Luxembourg"),
+    ("Madrid", "Spain"),
+    ("Manila", "Philippines"),
+    ("Mexico City", "Mexico"),
+    ("Milan", "Italy"),
+    ("Moscow", "Russia"),
+    ("Mumbai", "India"),
+    ("Munich", "Germany"),
+    ("Muscat", "Oman"),
+    ("Nagoya", "Japan"),
+    ("New York City", "United States"),
+    ("Nicosia", "Cyprus"),
+    ("Osaka", "Japan"),
+    ("Oslo", "Norway"),
+    ("Paris", "France"),
+    ("Prague", "Czech Republic"),
+    ("Riyadh", "Saudi Arabia"),
+    ("Santiago", "Chile"),
+    ("Sao Paulo", "Brazil"),
+    ("Shanghai", "China")
+    ("Shenzhen", "China"),
+    ("Singapore", "Singapore"),
+    ("Skopje", "Macedonia"),
+    ("Sofia", "Bulgaria"),
+    ("Stockholm", "Sweden"),
+    ("Stuttgart", "Germany"),
+    ("Sydney", "Australia"),
+    ("Taipei", "Taiwan"),
+    ("Tel Aviv", "Israel"),
+    ("Tokyo", "Japan"),
+    ("Toronto", "Canada"),
+    ("Vienna", "Austria"),
+    ("Warsaw", "Poland"),
+    ("Wellington", "New Zealand"),
+    ("Zagreb", "Croatia"),
+    ("Zurich", "Switzerland")
+]
+
+# Initialize geolocator
+geolocator = Nominatim(user_agent="city_map_generator")
+
+# Geocode each city
+city_coords = []
+for city, country in city_data:
+    location = geolocator.geocode(f"{city}, {country}")
+    if location:
+        city_coords.append((city, country, location.latitude, location.longitude))
+    else:
+        print(f"Could not find location for {city}, {country}")
+    time.sleep(1)  # Adding delay to prevent rate-limiting
+
+# Convert to DataFrame
+city_coords_df = pd.DataFrame(city_coords, columns=["City", "Country", "Latitude", "Longitude"])
+
+# Create GeoDataFrame
+geometry = [Point(xy) for xy in zip(city_coords_df["Longitude"], city_coords_df["Latitude"])]
+cities_gdf = gpd.GeoDataFrame(city_coords_df, geometry=geometry)
+
+# Load world map data
+world = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))
+
+# Plot map
+fig, ax = plt.subplots(figsize=(15, 10))
+world.plot(ax=ax, color='lightgrey')
+cities_gdf.plot(ax=ax, color='red', markersize=10)
+
+# Annotate each city
+for x, y, label in zip(cities_gdf.geometry.x, cities_gdf.geometry.y, cities_gdf["City"]):
+    ax.text(x, y, label, fontsize=6, ha="right")
+
+ax.set_title("Map with Exchange Cities")
+plt.show()
+
+
